@@ -1,0 +1,130 @@
+﻿@page "/midiTests"
+@using Microsoft.AspNetCore.SignalR.Client
+@using Commons.Music.Midi
+@using System.Diagnostics.CodeAnalysis
+@inject NavigationManager NavigationManager
+
+<h3>Output/Input Device</h3>
+<RadzenListBox @bind-Value="@selectedOutputDevice" Data="@OutputDevices" TextProperty="CompanyName" ValueProperty="CustomerID" Style="margin-bottom: 20px;height:200px;" Change="@(args => ChangeOutput(args, "ListBox"))" />
+<RadzenListBox @bind-Value="@selectedInputDevice" Data="@InputDevices" TextProperty="CompanyName" ValueProperty="CustomerID" Style="margin-bottom: 20px;height:200px;" Change="@(args => ChangeInput(args, "ListBox"))" />
+
+<h3>Play Test</h3>
+<RadzenButton Click="@((args) => MidiTest())" Text="Midi Test" Style="margin-bottom: 20px; width: 150px" />
+<h3>Play SMF</h3>
+<RadzenButton Click="@((args) => PlaySMF())" Text="Midi Test" Style="margin-bottom: 20px; width: 150px" />
+
+<div style="max-height: 50%">
+    <p>Message Count: @(messages.Count)</p><RadzenButton Click="@((args) => ClearLog())" Text="Clear Log" Style="margin-bottom: 20px; width: 150px" />
+    <RazdenCard style="max-height: 300px; overflow-y: scroll; display: flex; flex-direction: column-reverse">
+        @foreach (var message in messages)
+        {
+            @message<br/>
+        }
+    </RazdenCard>
+    @*     <ul id="messagesList"> *@
+    @*          @foreach (var message in messages) *@
+    @*          { *@
+    @*              <li>@message</li> *@
+    @*          } *@
+    @*     </ul>    *@
+</div>
+
+
+@code {
+    private HubConnection hubConnection;
+    private List<string> messages = new List<string>();
+    private string userInput;
+    private string messageInput;
+    private string selectedOutputDevice;
+    private string selectedInputDevice;
+    private List<string> OutputDevices = new List<String>();
+    private List<string> InputDevices = new List<String>();
+
+    async Task ChangeOutput(object value, string name)
+    {
+        Console.WriteLine("Output Device selected");
+        await hubConnection.SendAsync("SetOutputDevice", value.ToString());
+    }
+
+    async Task ChangeInput(object value, string name)
+    {
+        Console.WriteLine("Input Device selected");
+        await hubConnection.SendAsync("SetInputDevice", value.ToString());
+    }
+    
+    async Task MidiTest()
+    {
+        await hubConnection.SendAsync("MidiTest");
+    }
+
+    async Task PlaySMF()
+    {
+        await hubConnection.SendAsync("PlaySMF");
+    }
+    
+    void ClearLog()
+    {
+        messages.Clear();
+        StateHasChanged();
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/midiHub"))
+            .Build();
+
+        hubConnection.On<IEnumerable<string>>("ReceiveOutputDeviceList", (devices) =>
+        {
+            this.OutputDevices.Clear();
+            foreach (var device in devices)
+            {
+                this.OutputDevices.Add(device);
+            }
+            StateHasChanged();
+        });
+        
+        hubConnection.On<IEnumerable<string>>("ReceiveInputDeviceList", (devices) =>
+        {
+            this.InputDevices.Clear();
+            foreach (var device in devices)
+            {
+                this.InputDevices.Add(device);
+            }
+            StateHasChanged();
+        });
+        
+        hubConnection.On<string>("ReceiveOutput", (device) =>
+        {
+            this.selectedOutputDevice = device;
+            StateHasChanged();
+        });
+        
+        hubConnection.On<string>("ReceiveInput", (device) =>
+        {
+            this.selectedInputDevice = device;
+            StateHasChanged();
+        });
+        
+        hubConnection.On<string>("ReceiveMidiInputMessage", (message) =>
+        {
+            // Console.WriteLine(message);
+            messages.Add(message);
+            StateHasChanged();
+        });
+        
+        await hubConnection.StartAsync();
+        await hubConnection.SendAsync("GetOutputDevices");
+        await hubConnection.SendAsync("GetInputDevices");
+        await hubConnection.SendAsync("GetOutput");
+        await hubConnection.SendAsync("GetInput");
+    }
+
+    Task Send() =>
+        hubConnection.SendAsync("SendMessage", userInput, messageInput);
+
+    public bool IsConnected =>
+        hubConnection.State == HubConnectionState.Connected;
+    
+    
+}
