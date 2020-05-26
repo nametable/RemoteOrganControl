@@ -12,7 +12,7 @@ namespace RemoteOrganControl.Server.Controllers
     // [Authorize]
     [ApiController]
     [Route("[controller]")]
-    public class WeatherForecastController : ControllerBase
+    public class SettingController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
         {
@@ -21,22 +21,15 @@ namespace RemoteOrganControl.Server.Controllers
 
         private readonly ILogger<WeatherForecastController> logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public SettingController(ILogger<WeatherForecastController> logger)
         {
             this.logger = logger;
         }
         
         [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
+        public IEnumerable<String> Get()
         {
-            var rng = new Random();
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)]
-            })
-            .ToArray();
+            return new List<string>().Append("test");
         }
     }
 }

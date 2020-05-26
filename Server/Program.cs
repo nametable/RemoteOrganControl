@@ -11,6 +11,7 @@ namespace RemoteOrganControl.Server
 {
     public class Program
     {
+        // https://docs.microsoft.com/en-us/aspnet/core/signalr/authn-and-authz?view=aspnetcore-3.1
         public static void Main(string[] args)
         {
             CreateHostBuilder(args).Build().Run();

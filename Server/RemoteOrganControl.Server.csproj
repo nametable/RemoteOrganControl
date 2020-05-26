@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UserSecretsId>RemoteOrganControl.Server-42DD28B0-DA3D-4B2E-9613-F4C63B48B887</UserSecretsId>
+    <Authors>Logan Bateman</Authors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Client\RemoteOrganControl.Client.csproj" />
+    <ProjectReference Include="..\OrganControlLib\OrganControlLib.csproj" />
     <ProjectReference Include="..\Shared\RemoteOrganControl.Shared.csproj" />
   </ItemGroup>
 
@@ -25,10 +27,6 @@
     <PackageReference Include="Microsoft.AspNetCore.ApiAuthorization.IdentityServer" Version="3.1.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Hubs" />
   </ItemGroup>
 
 </Project>
