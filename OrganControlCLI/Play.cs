@@ -12,13 +12,42 @@ namespace OrganControlCLI
         public string Filename { get; set; }
         [Option]
         private bool Test { get; set; }
+        [Option]
+        private bool ListDevices { get; set; }
+        [Option]
+        private string Output { get; set; }
         
         private int OnExecute(CommandLineApplication app, IConsole console)
         {
-            if (this.Test)
+            var player = new Player();
+            if (this.Output != null)
             {
-                var player = new Player();
+                var devices = player.GetDevices();
+                foreach (var device in devices)
+                {
+                    if (device.Id.ToLower().Contains(this.Output) || device.Name.ToLower().Contains(this.Output))
+                    {
+                        player.SetOutputPort(device);
+                        console.WriteLine($"Using {device.Id}: {device.Name} - {device.Manufacturer} - {device.Version}");
+                        break;
+                    }
+                }
+            }
+            if (this.ListDevices)
+            {
+                var devices = player.GetDevices();
+                foreach (var device in devices)
+                {
+                    console.WriteLine($"Device {device.Id}: {device.Name} - {device.Manufacturer} - {device.Version}");
+                }
+            }
+            else if (this.Test)
+            {
                 player.PlayTest();
+            }
+            else if (Filename == null)
+            {
+                app.ShowHelp();
             }
             console.WriteLine($"Filename: {Filename}");
             return 0;
