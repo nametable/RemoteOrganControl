@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
+using RemoteOrganControl.Server.Hubs;
 using RemoteOrganControl.Server.Data;
 using RemoteOrganControl.Server.Models;
 
@@ -44,6 +45,14 @@ namespace RemoteOrganControl.Server
 
             services.AddControllersWithViews();
             services.AddRazorPages();
+            
+            services.AddSignalR();
+            services.AddSingleton<MidiInterface>();
+            services.AddResponseCompression(opts =>
+            {
+                opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+                    new[] { "application/octet-stream" });
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -77,6 +86,8 @@ namespace RemoteOrganControl.Server
                 endpoints.MapRazorPages();
                 endpoints.MapControllers();
                 endpoints.MapFallbackToFile("index.html");
+                endpoints.MapHub<TestHub>("/testHub");
+                endpoints.MapHub<MidiHub>("/midiHub");
             });
         }
     }
