@@ -10,12 +10,13 @@ namespace OrganControlLib
 {
     public class Player
     {
-        private IMidiAccess access;
+        //private IMidiAccess access;
+        public IMidiAccess2 access;
         private IMidiOutput output;
         
         public Player()
         {
-            this.access = MidiAccessManager.Default;
+            this.access = (IMidiAccess2)MidiAccessManager.Default;
             this.output = access.OpenOutputAsync(access.Outputs.Last().Id).Result;
         }
 
@@ -23,10 +24,11 @@ namespace OrganControlLib
         {
             output.CloseAsync();
         }
-        public void SetOutputPort(IMidiPortDetails port)
+        public async void SetOutputPort(IMidiPortDetails port)
         {
-            output.CloseAsync();
-            this.output = access.OpenOutputAsync(port.Id).Result;
+            await output.CloseAsync();
+            // output.Dispose();
+            this.output = await access.OpenOutputAsync(port.Id);
         }
         public void Play()
         {

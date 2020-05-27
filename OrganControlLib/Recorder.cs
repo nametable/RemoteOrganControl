@@ -8,12 +8,12 @@ namespace OrganControlLib
 {
     public class Recorder
     {
-        private IMidiAccess access;
+        private IMidiAccess2 access;
         private IMidiInput input;
         
         public Recorder()
         {
-            this.access = MidiAccessManager.Default;
+            this.access = (IMidiAccess2)MidiAccessManager.Default;
             this.input = access.OpenInputAsync(access.Inputs.Last().Id).Result;
         }
 
