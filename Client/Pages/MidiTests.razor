@@ -2,15 +2,19 @@
 @using Microsoft.AspNetCore.SignalR.Client
 @using Commons.Music.Midi
 @using System.Diagnostics.CodeAnalysis
+@using System.IO
+@using OrganControlLib
 @inject NavigationManager NavigationManager
 
 <h3>Output/Input Device</h3>
-<RadzenListBox @bind-Value="@selectedOutputDevice" Data="@OutputDevices" TextProperty="CompanyName" ValueProperty="CustomerID" Style="margin-bottom: 20px;height:200px;" Change="@(args => ChangeOutput(args, "ListBox"))" />
-<RadzenListBox @bind-Value="@selectedInputDevice" Data="@InputDevices" TextProperty="CompanyName" ValueProperty="CustomerID" Style="margin-bottom: 20px;height:200px;" Change="@(args => ChangeInput(args, "ListBox"))" />
+<RadzenListBox @bind-Value="@selectedOutputDevice" Data="@OutputDevices" TextProperty="DeviceString" ValueProperty="DeviceId" Style="margin-bottom: 20px;height:200px;" Change="@(args => ChangeOutput(args, "ListBox"))" />
+<RadzenListBox @bind-Value="@selectedInputDevice" Data="@InputDevices" TextProperty="DeviceString" ValueProperty="DeviceId" Style="margin-bottom: 20px;height:200px;" Change="@(args => ChangeInput(args, "ListBox"))" />
 
 <h3>Play Test</h3>
 <RadzenButton Click="@((args) => MidiTest())" Text="Midi Test" Style="margin-bottom: 20px; width: 150px" />
 <h3>Play SMF</h3>
+<RadzenFileInput @bind-Value="@smf" Style="width:400px;" TValue="string" 
+                  Change="@(args => ChangeFile(args, "FileInput"))"/>
 <RadzenButton Click="@((args) => PlaySMF())" Text="Midi Test" Style="margin-bottom: 20px; width: 150px" />
 
 <div style="max-height: 50%">
@@ -31,25 +35,36 @@
 
 
 @code {
+    private string smf;
+    private string smfPreview;
     private HubConnection hubConnection;
     private List<string> messages = new List<string>();
     private string userInput;
     private string messageInput;
     private string selectedOutputDevice;
     private string selectedInputDevice;
-    private List<string> OutputDevices = new List<String>();
-    private List<string> InputDevices = new List<String>();
+    private List<DeviceDetails> OutputDevices = new List<DeviceDetails>();
+    private List<DeviceDetails> InputDevices = new List<DeviceDetails>();
 
     async Task ChangeOutput(object value, string name)
     {
         Console.WriteLine("Output Device selected");
-        await hubConnection.SendAsync("SetOutputDevice", value.ToString());
+        await hubConnection.SendAsync("SetOutputDevice", selectedOutputDevice);
     }
 
     async Task ChangeInput(object value, string name)
     {
         Console.WriteLine("Input Device selected");
-        await hubConnection.SendAsync("SetInputDevice", value.ToString());
+        await hubConnection.SendAsync("SetInputDevice", selectedInputDevice);
+    }
+
+    async Task ChangeFile(string value, string name)
+    {
+        byte[] data = new byte[16];
+        smfPreview = smf;
+        //smf.Read(data, 0, 16);
+        //smfPreview = BitConverter.ToString(data);
+        StateHasChanged();
     }
     
     async Task MidiTest()
@@ -74,35 +89,27 @@
             .WithUrl(NavigationManager.ToAbsoluteUri("/midiHub"))
             .Build();
 
-        hubConnection.On<IEnumerable<string>>("ReceiveOutputDeviceList", (devices) =>
+        hubConnection.On<IEnumerable<DeviceDetails>>("ReceiveOutputDeviceList", (devices) =>
         {
-            this.OutputDevices.Clear();
-            foreach (var device in devices)
-            {
-                this.OutputDevices.Add(device);
-            }
+            this.OutputDevices = devices.ToList();
             StateHasChanged();
         });
         
-        hubConnection.On<IEnumerable<string>>("ReceiveInputDeviceList", (devices) =>
+        hubConnection.On<IEnumerable<DeviceDetails>>("ReceiveInputDeviceList", (devices) =>
         {
-            this.InputDevices.Clear();
-            foreach (var device in devices)
-            {
-                this.InputDevices.Add(device);
-            }
+            this.InputDevices = devices.ToList();
             StateHasChanged();
         });
         
-        hubConnection.On<string>("ReceiveOutput", (device) =>
+        hubConnection.On<DeviceDetails>("ReceiveOutput", (device) =>
         {
-            this.selectedOutputDevice = device;
+            this.selectedOutputDevice = device.DeviceId;
             StateHasChanged();
         });
         
-        hubConnection.On<string>("ReceiveInput", (device) =>
+        hubConnection.On<DeviceDetails>("ReceiveInput", (device) =>
         {
-            this.selectedInputDevice = device;
+            this.selectedInputDevice = device.DeviceId;
             StateHasChanged();
         });
         

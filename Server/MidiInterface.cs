@@ -15,6 +15,15 @@ namespace RemoteOrganControl.Server
         public MidiInterface(IHubContext<MidiHub> hub)
         {
             Hub = hub;
+
+            this._player.access.StateChanged += (sender, args) =>
+            {
+                Console.WriteLine($"Device state changed: {args.Port.Id} - {args.Port.Name}");
+                var outputDevices = _player.GetDevices().Select(i => new DeviceDetails(){ DeviceName = i.Name, DeviceId = i.Id});
+                Hub.Clients.All.SendAsync("ReceiveOutputDeviceList",  outputDevices);
+                var inputDevices = _recorder.GetDevices().Select(i => new DeviceDetails(){ DeviceName = i.Name, DeviceId = i.Id});
+                Hub.Clients.All.SendAsync("ReceiveInputDeviceList",  inputDevices);
+            };
         }
 
         public void InitCallback()

@@ -20,12 +20,12 @@ namespace RemoteOrganControl.Server.Hubs
         
         public async Task GetOutputDevices()
         {
-            var devices = _midiInterface._player.GetDevices().Select(i => i.Name);
+            var devices = _midiInterface._player.GetDevices().Select(i => new DeviceDetails(){ DeviceName = i.Name, DeviceId = i.Id});// .Select(i => i.Name);
             await Clients.All.SendAsync("ReceiveOutputDeviceList",  devices);
         }
         public async Task GetInputDevices()
         {
-            var devices = _midiInterface._recorder.GetDevices().Select(i => i.Name);
+            var devices = _midiInterface._recorder.GetDevices().Select(i => new DeviceDetails(){ DeviceName = i.Name, DeviceId = i.Id});
             await Clients.All.SendAsync("ReceiveInputDeviceList",  devices);
         }
 
@@ -38,6 +38,12 @@ namespace RemoteOrganControl.Server.Hubs
                 {
                     _midiInterface._player.SetOutputPort(device);
                     Console.WriteLine($"Output: Using {device.Id}: {device.Name} - {device.Manufacturer} - {device.Version}");
+                    // Notify users of the device change
+                    await Clients.All.SendAsync("ReceiveOutput", new DeviceDetails()
+                    {
+                        DeviceName = _midiInterface._player.GetOutput().Details.Name,
+                        DeviceId = _midiInterface._player.GetOutput().Details.Id,
+                    });
                     break;
                 }
             }
@@ -52,6 +58,12 @@ namespace RemoteOrganControl.Server.Hubs
                 {
                     _midiInterface._recorder.SetInputPort(device);
                     Console.WriteLine($"Input: Using {device.Id}: {device.Name} - {device.Manufacturer} - {device.Version}");
+                    // Notify users of change
+                    await Clients.All.SendAsync("ReceiveInput", new DeviceDetails()
+                    {
+                        DeviceName = _midiInterface._recorder.GetInput().Details.Name,
+                        DeviceId = _midiInterface._recorder.GetInput().Details.Id,
+                    });
                     _midiInterface.InitCallback();
                     break;
                 }
@@ -87,12 +99,22 @@ namespace RemoteOrganControl.Server.Hubs
 
         public async Task GetOutput()
         {
-            await Clients.All.SendAsync("ReceiveOutput",  _midiInterface._player.GetOutput().Details.Name);
+            // Send back to current user
+            await Clients.User(this.Context.UserIdentifier).SendAsync("ReceiveOutput", new DeviceDetails()
+            {
+                DeviceName = _midiInterface._player.GetOutput().Details.Name,
+                DeviceId = _midiInterface._player.GetOutput().Details.Id,
+            });
         }
 
         public async Task GetInput()
         {
-            await Clients.All.SendAsync("ReceiveInput",  _midiInterface._recorder.GetInput().Details.Name);
+            // Send back to current user
+            await Clients.User(this.Context.UserIdentifier).SendAsync("ReceiveInput", new DeviceDetails()
+            {
+                DeviceName = _midiInterface._recorder.GetInput().Details.Name,
+                DeviceId = _midiInterface._recorder.GetInput().Details.Id,
+            });
         }
     }
 }
