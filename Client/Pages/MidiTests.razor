@@ -10,12 +10,14 @@
 <RadzenListBox @bind-Value="@selectedOutputDevice" Data="@OutputDevices" TextProperty="DeviceString" ValueProperty="DeviceId" Style="margin-bottom: 20px;height:200px;" Change="@(args => ChangeOutput(args, "ListBox"))" />
 <RadzenListBox @bind-Value="@selectedInputDevice" Data="@InputDevices" TextProperty="DeviceString" ValueProperty="DeviceId" Style="margin-bottom: 20px;height:200px;" Change="@(args => ChangeInput(args, "ListBox"))" />
 
-<h3>Play Test</h3>
+<h3>Single Note Test</h3>
 <RadzenButton Click="@((args) => MidiTest())" Text="Midi Test" Style="margin-bottom: 20px; width: 150px" />
-<h3>Play SMF</h3>
-<RadzenFileInput @bind-Value="@smf" Style="width:400px;" TValue="string" 
-                  Change="@(args => ChangeFile(args, "FileInput"))"/>
-<RadzenButton Click="@((args) => PlaySMF())" Text="Midi Test" Style="margin-bottom: 20px; width: 150px" />
+<h3>SMF Playback</h3>
+<RadzenUpload Url="smf/upload" Accept="audio/midi" Style="margin-bottom: 20px;"/>
+<RadzenButton Click="@((args) => PlaySMF())" Text="Play SMF" Style="margin-bottom: 20px; width: 150px" />
+<RadzenButton Click="@((args) => StopSMF())" Text="Stop SMF" Style="margin-bottom: 20px; width: 150px" />
+<RadzenListBox @bind-Value="@selectedSmfFilename" Data="@SmfFilenames" Style="margin-bottom: 20px;height:200px;" />
+
 
 <div style="max-height: 50%">
     <p>Message Count: @(messages.Count)</p><RadzenButton Click="@((args) => ClearLog())" Text="Clear Log" Style="margin-bottom: 20px; width: 150px" />
@@ -43,8 +45,10 @@
     private string messageInput;
     private string selectedOutputDevice;
     private string selectedInputDevice;
+    private string selectedSmfFilename;
     private List<DeviceDetails> OutputDevices = new List<DeviceDetails>();
     private List<DeviceDetails> InputDevices = new List<DeviceDetails>();
+    private List<string> SmfFilenames = new List<string>();
 
     async Task ChangeOutput(object value, string name)
     {
@@ -74,7 +78,12 @@
 
     async Task PlaySMF()
     {
-        await hubConnection.SendAsync("PlaySMF");
+        await hubConnection.SendAsync("PlaySmf", selectedSmfFilename);
+    }
+
+    async Task StopSMF()
+    {
+        await hubConnection.SendAsync("StopSmf");
     }
     
     void ClearLog()
@@ -117,6 +126,13 @@
         {
             // Console.WriteLine(message);
             messages.Add(message);
+            StateHasChanged();
+        });
+        
+        hubConnection.On<List<string>>("ReceiveSmfNames", (smfNames) =>
+        {
+            // Console.WriteLine(message);
+            SmfFilenames = smfNames;
             StateHasChanged();
         });
         

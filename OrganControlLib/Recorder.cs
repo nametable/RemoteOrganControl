@@ -21,9 +21,9 @@ namespace OrganControlLib
         {
             input.CloseAsync();
         }
-        public void SetInputPort(IMidiPortDetails port)
+        public async void SetInputPort(IMidiPortDetails port)
         {
-            input.CloseAsync();
+            await input.CloseAsync();
             this.input = access.OpenInputAsync(port.Id).Result;
         }
         public void Play()
