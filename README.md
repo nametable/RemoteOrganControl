@@ -1,4 +1,4 @@
-# RemoteOrganControl
+# RemoteOrganControl [WIP]
 Control organs/midi devices via a web interface
 
 ## Building
