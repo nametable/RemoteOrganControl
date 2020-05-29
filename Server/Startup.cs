@@ -47,7 +47,7 @@ namespace RemoteOrganControl.Server
             services.AddRazorPages();
             
             services.AddSignalR();
-            services.AddSingleton<MidiInterface>();
+            services.AddSingleton<OrganController>();
             services.AddResponseCompression(opts =>
             {
                 opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
